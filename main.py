@@ -7,6 +7,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.core.window import Window
 from kivy.graphics import Rectangle, Color
 from kivy.lang import Builder
+from kivy.properties import NumericProperty
 
 class Background(Label):
     # Creating background image
@@ -24,10 +25,27 @@ class Background(Label):
 
 # Main Menu
 class SoloMenu(Screen):
+
+    # Refresh level label
+    def refresh_level_text(self, instance, value):
+        self.level_label.text = f"EXP: {value}"
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # Adding background
         self.add_widget(Background())
+
+        app = App.get_running_app()
+        
+        # Label indicating level and experience
+        self.level_label = Label(
+            text=f"EXP: {app.level}",
+            pos_hint={'center_x': .5, 'center_y': .9},
+            font_size=30
+        )
+        self.add_widget(self.level_label)
+        
+        app.bind(level=self.refresh_level_text)
 
         # Buttons
         def create_button(name, x, y, screen):
@@ -45,6 +63,7 @@ class SoloMenu(Screen):
         create_button('Day 2', .5, .5, 'day_two')
         create_button('Day 3', .5, .3, 'day_three')
 
+    # After pressing the "Day number" button, we move to another screen
     def press(self, instance, screen):
         self.manager.transition.direction ='left'
         self.manager.current=screen
@@ -54,20 +73,97 @@ class SoloDayOne(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.add_widget(Background())
+        app=App.get_running_app()
 
-        self.button = Button(text="Go Back", 
-                            size_hint=(.3,.15),
-                            pos_hint={'center_x':.5,'center_y':.7},
+        #Button "Go Back"
+        self.buttonGoBack = Button(text="Go Back", 
+                            size_hint=(.3,.10),
+                            pos_hint={'center_x':.7,'center_y':.2},
                             font_size=40,
                             font_name='./fonts/BebasNeue-Regular.ttf',
                             color=(0.2, 0.8, 1, 1),
                             background_color=[0.05,0.05,0.05,1])
-        self.button.bind(on_release=self.press)     
-        self.add_widget(self.button)
+        self.buttonGoBack.bind(on_release=self.press_back)     
+        self.add_widget(self.buttonGoBack)
+
+        #Button "Delete"
+        self.buttonDel = Button(text="DELETE", 
+                            size_hint=(.3,.10),
+                            pos_hint={'center_x':.3,'center_y':.2},
+                            font_size=40,
+                            font_name='./fonts/BebasNeue-Regular.ttf',
+                            color=(0.2, 0.8, 1, 1),
+                            background_color=[0.05,0.05,0.05,1])
+        self.buttonDel.bind(on_release=self.press_delete)     
+        self.add_widget(self.buttonDel)
+
+        #Button "+"
+        self.buttonPlus = Button(text="+",
+                             size_hint=(.8,.08),
+                             pos_hint={'center_x':.5,'center_y':app.centerY},
+                             font_size=40,
+                             font_name="./fonts/BebasNeue-Regular.ttf",
+                             color=(0.2, 0.8, 1, 1),
+                             background_color=[0.05,0.05,0.05,1])
+        self.buttonPlus.bind(on_release=self.create_exercise)
+        self.buttonPlus.bind(on_release=self.spaceForButton)
+        self.add_widget(self.buttonPlus)
+    
+    #Function for removing button "+" when it cover other buttons
+    def spaceForButton(self, instance):
+        if abs(self.buttonPlus.pos_hint.get('center_y')-self.buttonGoBack.pos_hint.get('center_y'))<0.2:  
+            self.buttonPlus.pos_hint={'center_x':-1}
+            self.do_layout()
+
+    #When we press the button "+", we creating text input and button "Done"
+    def create_exercise(self, instance):
+
+        app=App.get_running_app()
+
+        self.text_input = TextInput(size_hint=(.7,.08),
+                                    pos_hint={'center_x':.5,'center_y':app.centerY},
+                                    font_size=30,
+                                    foreground_color=(0.2, 0.8, 1, 1),
+                                    background_color=[0,0,0,1],
+                                    multiline=False)
+        self.text_input.exercise = True
+        self.add_widget(self.text_input)
         
-    def press(self, instance):
+        self.buttonDone = Button(text="DONE", 
+                            size_hint=(.1,.08),
+                            pos_hint={'center_x':.9,'center_y':app.centerY},
+                            font_size=25,
+                            font_name='./fonts/BebasNeue-Regular.ttf',
+                            color=(0.2, 0.8, 1, 1),
+                            background_color=[0.05,0.05,0.05,1])
+        self.buttonDone.exercise = True
+        self.buttonDone.bind(on_release=self.press_exp)     
+        self.add_widget(self.buttonDone)
+
+        app.centerY -= 0.1
+
+        self.buttonPlus.pos_hint={'center_y':app.centerY}
+    
+    #We can get experience for level when we press the button "Done"
+    def press_exp(self, instance):
+        App.get_running_app().level += 20
+
+    #Clearing all buttons and text inputs when we press the button "Delete"
+    def press_delete(self, instance):
+        app = App.get_running_app()
+
+        for widget in list(self.children):
+                if hasattr(widget, 'exercise'):
+                    self.remove_widget(widget)
+                    
+        app.centerY = 0.9
+        self.buttonPlus.pos_hint={'center_x':.5,'center_y':app.centerY}
+
+    #Returning to the menu screen after pressing the "Go Back" button
+    def press_back(self, instance):
         self.manager.transition.direction ='right'
         self.manager.current='menu'
+
 
 # Screen Day 2
 class SoloDayTwo(Screen):
@@ -108,6 +204,8 @@ class SoloDayThree(Screen):
         self.manager.current='menu'
 
 class SoloApp(App):
+    level = NumericProperty(0)
+    centerY = NumericProperty(0.9)
     def build(self):
         sm = ScreenManager()
 
