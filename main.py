@@ -3,12 +3,10 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.label import Label
-from kivy.uix.floatlayout import FloatLayout
-from kivy.core.window import Window
-from kivy.graphics import Rectangle, Color
-from kivy.lang import Builder
+from kivy.graphics import Rectangle
 from kivy.properties import NumericProperty
 from kivy.storage.jsonstore import JsonStore
+from save_load import save_exercise, load_exercise, save_level, load_level
 
 class Background(Label):
     # Creating background image
@@ -92,16 +90,13 @@ class SoloMenu(Screen):
         self.manager.transition.direction ='left'
         self.manager.current=screen
 
-# Screen Day 1
-class SoloDayOne(Screen):
+# Base screen class
+class DaysScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.add_widget(Background())
         app=App.get_running_app()
-
-
-
-        # Button "Go Back"
+                # Button "Go Back"
         self.buttonGoBack = Button(text="Go Back", 
                             size_hint=(.3,.10),
                             pos_hint={'center_x':.7,'center_y':.1},
@@ -190,101 +185,39 @@ class SoloDayOne(Screen):
         self.manager.transition.direction ='right'
         self.manager.current='menu'
 
+    key = ""
+
+    ctg_workout = ""
+
+    ctg_plus = ""
+
     # This function for saving exercises when we leave screen
     def on_leave(self):
-        exercise_list = []
-        for widget in list(self.children):
-            if isinstance(widget, TextInput):
-                exercise_list.append(widget.text)
-        for widget in list(self.children):
-                if hasattr(widget, 'exercise'):
-                    self.remove_widget(widget)
-        app=App.get_running_app()
-        y = self.buttonPlus.pos_hint.get('center_y')
-        app.store.put('workout', exercises=exercise_list)
-        app.store.put('plus', plus_x = 0.5, plus_y = y)
+        save_exercise(self, self.ctg_workout, self.ctg_plus)
 
     # Loading saved exercises from file 'data.json'
     def on_pre_enter(self, *args):
-        app=App.get_running_app()
-        app.centerY = 0.9
-        if app.store.exists('workout'):
-            if app.store.exists('plus'):
-                x = app.store.get('plus')['plus_x']
-                if app.store.get('plus')['plus_y'] is None:
-                    y = 0.2
-                    app.store.put('plus', plus_x = 0.5, plus_y = 0.2)
-                else:
-                    y = app.store.get('plus')['plus_y']
-            exercise_list = app.store.get('workout')
-            for exercise in reversed(exercise_list['exercises']):
-                self.text_input = TextInput(text=exercise,
-                                            size_hint=(.7,.06),
-                                            pos_hint={'center_x':.45,'center_y':app.centerY},
-                                            font_size=20,
-                                            foreground_color=(0.2, 0.8, 1, 1),
-                                            background_color=[0,0,0,1],
-                                            multiline=False)
-                self.text_input.exercise = True
-                self.add_widget(self.text_input)
-                
-                self.buttonDone = Button(text="DONE", 
-                                    size_hint=(.1,.06),
-                                    pos_hint={'center_x':.85,'center_y':app.centerY},
-                                    font_size=25,
-                                    font_name='./fonts/BebasNeue-Regular.ttf',
-                                    color=(0.2, 0.8, 1, 1),
-                                    background_color=[0.05,0.05,0.05,1])
-                self.buttonDone.exercise = True
-                self.buttonDone.bind(on_release=self.press_exp)    
-                self.add_widget(self.buttonDone)
-                
-                app.centerY -= 0.07
+        load_exercise(self, self.ctg_workout, self.ctg_plus)
 
-                self.buttonPlus.pos_hint={'center_x': x, 'center_y':y}
-
-            if self.buttonPlus.pos_hint.get('center_y')<=0.2:  
-                self.buttonPlus.pos_hint={'center_x':10}
-            self.do_layout()
-
+# Screen Day 1
+class SoloDayOne(DaysScreen):
+    key = "day_1"
+    ctg_plus = "plus_dayOne"
+    ctg_workout = "workout_dayOne"
+    
 # Screen Day 2
-class SoloDayTwo(Screen):
-    def __init__(self, **kw):
-        super().__init__(**kw)
-        self.add_widget(Background())
+class SoloDayTwo(DaysScreen):
+    key = "day_2"
+    ctg_plus = "plus_dayTwo"
+    ctg_workout = "workout_dayTwo"
 
-        self.button = Button(text="Go Back", 
-                            size_hint=(.3,.15),
-                            pos_hint={'center_x':.5,'center_y':.7},
-                            font_size=40,
-                            font_name='./fonts/BebasNeue-Regular.ttf',
-                            color=(0.2, 0.8, 1, 1),
-                            background_color=[0.05,0.05,0.05,1])
-        self.button.bind(on_release=self.press)     
-        self.add_widget(self.button)
-
-    def press(self, instance):
-        self.manager.transition.direction ='right'
-        self.manager.current='menu'
 # Screen Day 3
-class SoloDayThree(Screen):
-    def __init__(self, **kw):
-        super().__init__(**kw)
-        self.add_widget(Background())
-        self.button = Button(text="Go Back", 
-                            size_hint=(.3,.15),
-                            pos_hint={'center_x':.5,'center_y':.7},
-                            font_size=40,
-                            font_name='./fonts/BebasNeue-Regular.ttf',
-                            color=(0.2, 0.8, 1, 1),
-                            background_color=[0.05,0.05,0.05,1])
-        self.button.bind(on_release=self.press)     
-        self.add_widget(self.button)
+class SoloDayThree(DaysScreen):
+    key = "day_3"
+    ctg_plus = "plus_dayThree"
+    ctg_workout = "workout_dayThree"
 
-    def press(self, instance):
-        self.manager.transition.direction ='right'
-        self.manager.current='menu'
-
+# Main App    
 class SoloApp(App):
     store = JsonStore('data.json')
 
@@ -296,15 +229,11 @@ class SoloApp(App):
 
     # Loading level and experience when we start the app
     def on_start(self):
-        if self.store.exists('user_stats'):
-            stats = self.store.get('user_stats')
-            self.level = stats['level']
-            self.exp = stats['exp']
-            self.max_exp = stats['maxexp']
+        load_level(self)
 
     # Saving our progress (level, experience) in file 'data.json'
     def on_stop(self):
-        self.store.put('user_stats', level=self.level, exp=self.exp, maxexp=self.max_exp)
+        save_level(self)
 
     # Screens    
     def build(self):
