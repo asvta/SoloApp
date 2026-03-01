@@ -6,6 +6,8 @@ from kivy.uix.label import Label
 from kivy.graphics import Rectangle
 from kivy.properties import NumericProperty
 from kivy.storage.jsonstore import JsonStore
+from kivy.metrics import sp
+import os
 from save_load import save_exercise, load_exercise, save_level, load_level
 
 class Background(Label):
@@ -53,7 +55,7 @@ class SoloMenu(Screen):
         self.exp_label = Label(
             text=f"EXP: {app.exp}/{app.max_exp}",
             pos_hint={'center_x': .5, 'center_y': .85},
-            font_size=25
+            font_size=sp(25)
         )
         self.add_widget(self.exp_label)
 
@@ -63,7 +65,7 @@ class SoloMenu(Screen):
         self.level_label = Label(
             text=f"LEVEL: {app.level}",
             pos_hint={'center_x': .5, 'center_y': .9},
-            font_size=30
+            font_size=sp(30)
         )
         self.add_widget(self.level_label)
 
@@ -74,7 +76,7 @@ class SoloMenu(Screen):
             self.button = Button(text=name, 
                             size_hint=(.3,.10),
                             pos_hint={'center_x':x,'center_y':y},
-                            font_size=40,
+                            font_size=sp(40),
                             font_name='./fonts/BebasNeue-Regular.ttf',
                             color=(0.2, 0.8, 1, 1),
                             background_color=[0.05,0.05,0.05,1])
@@ -100,7 +102,7 @@ class DaysScreen(Screen):
         self.buttonGoBack = Button(text="Go Back", 
                             size_hint=(.3,.10),
                             pos_hint={'center_x':.7,'center_y':.1},
-                            font_size=40,
+                            font_size=sp(40),
                             font_name='./fonts/BebasNeue-Regular.ttf',
                             color=(0.2, 0.8, 1, 1),
                             background_color=[0.05,0.05,0.05,1])
@@ -111,7 +113,7 @@ class DaysScreen(Screen):
         self.buttonDel = Button(text="DELETE", 
                             size_hint=(.3,.10),
                             pos_hint={'center_x':.3,'center_y':.1},
-                            font_size=40,
+                            font_size=sp(40),
                             font_name='./fonts/BebasNeue-Regular.ttf',
                             color=(0.2, 0.8, 1, 1),
                             background_color=[0.05,0.05,0.05,1])
@@ -122,7 +124,7 @@ class DaysScreen(Screen):
         self.buttonPlus = Button(text="+",
                              size_hint=(.8,.06),
                              pos_hint={'center_x':.5,'center_y':app.centerY},
-                             font_size=40,
+                             font_size=sp(40),
                              font_name="./fonts/BebasNeue-Regular.ttf",
                              color=(0.2, 0.8, 1, 1),
                              background_color=[0.05,0.05,0.05,1])
@@ -143,7 +145,7 @@ class DaysScreen(Screen):
 
         self.text_input = TextInput(size_hint=(.7,.06),
                                     pos_hint={'center_x':.45,'center_y':app.centerY},
-                                    font_size=20,
+                                    font_size=sp(20),
                                     foreground_color=(0.2, 0.8, 1, 1),
                                     background_color=[0,0,0,1],
                                     multiline=False)
@@ -153,7 +155,7 @@ class DaysScreen(Screen):
         self.buttonDone = Button(text="DONE", 
                             size_hint=(.1,.06),
                             pos_hint={'center_x':.85,'center_y':app.centerY},
-                            font_size=25,
+                            font_size=sp(25),
                             font_name='./fonts/BebasNeue-Regular.ttf',
                             color=(0.2, 0.8, 1, 1),
                             background_color=[0.05,0.05,0.05,1])
@@ -167,7 +169,10 @@ class DaysScreen(Screen):
     
     # We can get experience for level when we press the button "Done"
     def press_exp(self, instance):
-        App.get_running_app().exp += 20
+        app = App.get_running_app()
+        app.exp += 20
+
+        save_level(app)
 
     # Clearing all buttons and text inputs when we press the button "Delete"
     def press_delete(self, instance):
@@ -219,7 +224,6 @@ class SoloDayThree(DaysScreen):
 
 # Main App    
 class SoloApp(App):
-    store = JsonStore('data.json')
 
     exp = NumericProperty(0)
     max_exp = NumericProperty (200)
@@ -229,6 +233,8 @@ class SoloApp(App):
 
     # Loading level and experience when we start the app
     def on_start(self):
+        data_path = os.path.join(self.user_data_dir, 'data.json')
+        self.store = JsonStore(data_path)
         load_level(self)
 
     # Saving our progress (level, experience) in file 'data.json'

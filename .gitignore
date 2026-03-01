@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+
+data.json
+.buildozer/
+bin/
+*.spec

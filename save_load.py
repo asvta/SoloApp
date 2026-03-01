@@ -1,5 +1,6 @@
 from kivy.uix.textinput import TextInput
 from kivy.app import App
+from kivy.metrics import sp
 from kivy.uix.button import Button
 
 def save_exercise(self, ctg_workout, ctg_plus):
@@ -31,7 +32,7 @@ def load_exercise(self, ctg_workout, ctg_plus):
                 self.text_input = TextInput(text=exercise,
                                             size_hint=(.7,.06),
                                             pos_hint={'center_x':.45,'center_y':app.centerY},
-                                            font_size=20,
+                                            font_size=sp(20),
                                             foreground_color=(0.2, 0.8, 1, 1),
                                             background_color=[0,0,0,1],
                                             multiline=False)
@@ -41,7 +42,7 @@ def load_exercise(self, ctg_workout, ctg_plus):
                 self.buttonDone = Button(text="DONE", 
                                     size_hint=(.1,.06),
                                     pos_hint={'center_x':.85,'center_y':app.centerY},
-                                    font_size=25,
+                                    font_size=sp(25),
                                     font_name='./fonts/BebasNeue-Regular.ttf',
                                     color=(0.2, 0.8, 1, 1),
                                     background_color=[0.05,0.05,0.05,1])
@@ -57,12 +58,12 @@ def load_exercise(self, ctg_workout, ctg_plus):
                 self.buttonPlus.pos_hint={'center_x':10}
             self.do_layout()
 
-def save_level(self):
-    self.store.put('user_stats', level=self.level, exp=self.exp, maxexp=self.max_exp)
+def save_level(app_instance):
+    app_instance.store.put('user_stats', level=app_instance.level, exp=app_instance.exp, maxexp=app_instance.max_exp)
 
-def load_level(self):
-    if self.store.exists('user_stats'):
-        stats = self.store.get('user_stats')
-        self.level = stats['level']
-        self.exp = stats['exp']
-        self.max_exp = stats['maxexp']
+def load_level(app_instance):
+    if app_instance.store.exists('user_stats'):
+        stats = app_instance.store.get('user_stats')
+        app_instance.level = stats['level']
+        app_instance.exp = stats['exp']
+        app_instance.max_exp = stats['maxexp']
